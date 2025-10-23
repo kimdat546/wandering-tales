@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "convex/react";
 import { api } from "@wandering-tales/backend/convex/_generated/api";
+import Link from "next/link";
 
 const TITLE_TEXT = `
  ██████╗ ███████╗████████╗████████╗███████╗██████╗
@@ -39,6 +40,19 @@ export default function Home() {
 									: "Error"}
 						</span>
 					</div>
+				</section>
+
+				<section className="rounded-lg border p-4">
+					<h2 className="mb-4 text-xl font-semibold">Wandering Tales</h2>
+					<p className="mb-4 text-sm text-muted-foreground">
+						Explore my travels across India on an interactive 3D globe
+					</p>
+					<Link
+						href="/map"
+						className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
+					>
+						View Travel Map
+					</Link>
 				</section>
 			</div>
 		</div>

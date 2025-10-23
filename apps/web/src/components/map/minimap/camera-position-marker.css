@@ -1,0 +1,37 @@
+.camera-position-marker svg {
+  --camera-heading: 0;
+
+  transform-origin: 50% 0;
+  translate: -50% -50%;
+  rotate: calc(var(--camera-heading) * 1deg);
+}
+
+.camera-position-marker path {
+  fill: red;
+  stroke: black;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+[class$="alpha-banner"] {
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+  top: auto;
+  bottom: 1.5rem;
+  max-width: 600px;
+  font-size: 0.875em;
+  border-radius: 10px;
+}
+
+.minimap {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+
+  width: 50%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 5px 2px 20px rgb(0, 0, 0, 0.6);
+}
