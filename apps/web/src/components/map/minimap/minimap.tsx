@@ -1,12 +1,10 @@
-import React, { useMemo } from "react";
-import { Map, MapMouseEvent, useMap } from "@vis.gl/react-google-maps";
-
-import { estimateCameraPosition } from "./estimate-camera-position";
-import { CameraPositionMarker } from "./camera-position-marker";
-import { ViewCenterMarker } from "./view-center-marker";
-
-import type { Map3DCameraProps } from "../map-3d";
+import { Map, type MapMouseEvent, useMap } from "@vis.gl/react-google-maps";
+import { useMemo } from "react";
 import { useDebouncedEffect } from "@/lib/utility-hooks";
+import type { Map3DCameraProps } from "../map-3d";
+import { CameraPositionMarker } from "./camera-position-marker";
+import { estimateCameraPosition } from "./estimate-camera-position";
+import { ViewCenterMarker } from "./view-center-marker";
 
 type MiniMapProps = {
   camera3dProps: Map3DCameraProps;
@@ -23,7 +21,9 @@ export const MiniMap = ({ camera3dProps, onMapClick }: MiniMapProps) => {
 
   useDebouncedEffect(
     () => {
-      if (!minimap) return;
+      if (!minimap) {
+        return;
+      }
 
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(camera3dProps.center);
@@ -43,20 +43,20 @@ export const MiniMap = ({ camera3dProps, onMapClick }: MiniMapProps) => {
 
   return (
     <Map
-      id={"minimap"}
-      className={"minimap"}
-      mapId={"bf51a910020fa25a"}
+      className="absolute right-6 bottom-6 aspect-square w-1/2 max-w-80 overflow-hidden rounded-xl shadow-[5px_2px_20px_rgba(0,0,0,0.6)]"
+      clickableIcons={false}
       defaultCenter={camera3dProps.center}
       defaultZoom={10}
-      onClick={onMapClick}
       disableDefaultUI
-      clickableIcons={false}
+      id="minimap"
+      mapId="bf51a910020fa25a"
+      onClick={onMapClick}
     >
-      <ViewCenterMarker position={camera3dProps.center}></ViewCenterMarker>
+      <ViewCenterMarker position={camera3dProps.center} />
       <CameraPositionMarker
-        position={cameraPosition}
         heading={camera3dProps.heading}
-      ></CameraPositionMarker>
+        position={cameraPosition}
+      />
     </Map>
   );
 };

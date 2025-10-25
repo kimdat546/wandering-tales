@@ -9,7 +9,9 @@
       "Bash(bun run:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(bun x ultracite fix:*)",
+      "Bash(bun x ultracite check:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

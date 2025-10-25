@@ -1,14 +1,14 @@
-import {useEffect, useRef} from 'react';
-import {Map3DCameraProps} from './map-3d';
+import { useEffect, useRef } from "react";
+import type { Map3DCameraProps } from "./map-3d";
 
-const cameraPropNames = ['center', 'range', 'heading', 'tilt', 'roll'] as const;
+const cameraPropNames = ["center", "range", "heading", "tilt", "roll"] as const;
 
 const DEFAULT_CAMERA_PROPS: Map3DCameraProps = {
-  center: {lat: 0, lng: 0, altitude: 0},
+  center: { lat: 0, lng: 0, altitude: 0 },
   range: 0,
   heading: 0,
   tilt: 0,
-  roll: 0
+  roll: 0,
 };
 
 /**
@@ -35,7 +35,7 @@ export function useMap3DCameraEvents(
 
         if (newValue == null) return;
 
-        if (p === 'center')
+        if (p === "center")
           // fixme: the typings say this should be a LatLngAltitudeLiteral, but in reality a
           //  LatLngAltitude object is returned, even when a LatLngAltitudeLiteral was written
           //  to the property.

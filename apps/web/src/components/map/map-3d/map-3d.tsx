@@ -1,10 +1,9 @@
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
-import React, {
-  ForwardedRef,
+import {
+  type ForwardedRef,
   forwardRef,
   useEffect,
   useImperativeHandle,
-  useMemo,
   useState,
 } from "react";
 import { useMap3DCameraEvents } from "./use-map-3d-camera-events";
@@ -65,14 +64,16 @@ export const Map3D = forwardRef(
 
     return (
       <gmp-map-3d
-        ref={map3dRef}
         center={center}
-        range={props.range}
         heading={props.heading}
-        tilt={props.tilt}
-        roll={props.roll}
         mode="HYBRID"
-      ></gmp-map-3d>
+        range={props.range}
+        ref={map3dRef}
+        roll={props.roll}
+        tilt={props.tilt}
+      />
     );
   }
 );
+
+Map3D.displayName = "Map3D";

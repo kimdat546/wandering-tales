@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { APIProvider, type MapMouseEvent } from "@vis.gl/react-google-maps";
+import { useCallback, useState } from "react";
 import { Map3D, type Map3DCameraProps } from "./map-3d";
 import { MiniMap } from "./minimap";
 
@@ -9,7 +9,7 @@ const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string;
 
 const INITIAL_CAMERA: Map3DCameraProps = {
   center: { lat: 20.5937, lng: 78.9629, altitude: 0 }, // India center
-  range: 5000000,
+  range: 5_000_000,
   heading: 0,
   tilt: 45,
   roll: 0,
@@ -20,7 +20,7 @@ export function Map3DView() {
     useState<Map3DCameraProps>(INITIAL_CAMERA);
 
   const handleCameraChange = useCallback((props: Map3DCameraProps) => {
-    setCameraProps(props);
+    setCameraProps({ ...props });
   }, []);
 
   const handleMapClick = useCallback((ev: MapMouseEvent) => {
@@ -35,13 +35,10 @@ export function Map3DView() {
       <div className="h-screen w-full">
         <Map3D
           {...cameraProps}
-          onCameraChange={handleCameraChange}
           defaultLabelsDisabled={false}
+          onCameraChange={handleCameraChange}
         />
-        <MiniMap
-          camera3dProps={cameraProps}
-          onMapClick={handleMapClick}
-        ></MiniMap>
+        <MiniMap camera3dProps={cameraProps} onMapClick={handleMapClick} />
       </div>
     </APIProvider>
   );

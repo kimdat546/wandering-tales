@@ -1,7 +1,4 @@
-import React from "react";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-
-import "./camera-position-marker.css";
 
 type CameraPositionMarkerProps = {
   position: google.maps.LatLngAltitudeLiteral;
@@ -12,18 +9,23 @@ export const CameraPositionMarker = ({
   position,
   heading,
 }: CameraPositionMarkerProps) => (
-  <AdvancedMarker
-    position={position}
-    style={{ width: 0, height: 0 }}
-    className={"camera-position-marker"}
-  >
+  <AdvancedMarker position={position} style={{ width: 0, height: 0 }}>
     <svg
-      viewBox={"-1 -1 2 2"}
-      width={20}
+      className="-translate-x-1/2 -translate-y-1/2 origin-[50%_0]"
       height={20}
-      style={{ "--camera-heading": heading } as React.CSSProperties}
+      style={{
+        transform: `rotate(${heading}deg)`,
+        transformOrigin: "50% 0",
+      }}
+      viewBox="-1 -1 2 2"
+      width={20}
     >
-      <path d={"M0,-1L-.5,1L.5,1z"}></path>
+      <title>Camera Position</title>
+      <path
+        className="fill-red-500 stroke-2 stroke-black"
+        d="M0,-1L-.5,1L.5,1z"
+        style={{ vectorEffect: "non-scaling-stroke" }}
+      />
     </svg>
   </AdvancedMarker>
 );

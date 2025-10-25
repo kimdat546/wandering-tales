@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-namespace, @typescript-eslint/no-explicit-any */
 
-import {DOMAttributes, RefAttributes} from 'react';
+import type { DOMAttributes, RefAttributes } from "react";
 
 // add an overload signature for the useMapsLibrary hook, so typescript
 // knows what the 'maps3d' library is.
-declare module '@vis.gl/react-google-maps' {
+declare module "@vis.gl/react-google-maps" {
   export function useMapsLibrary(
-    name: 'maps3d'
+    name: "maps3d"
   ): typeof google.maps.maps3d | null;
 }
 
@@ -14,17 +14,17 @@ declare module '@vis.gl/react-google-maps' {
 declare global {
   namespace google.maps.maps3d {
     interface Map3DElement extends HTMLElement {
-      mode?: 'HYBRID' | 'SATELLITE';
+      mode?: "HYBRID" | "SATELLITE";
     }
   }
 }
 
 // add the <gmp-map-3d> custom-element to the JSX.IntrinsicElements
 // interface, so it can be used in jsx
-declare module 'react' {
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
-      ['gmp-map-3d']: CustomElement<
+      ["gmp-map-3d"]: CustomElement<
         google.maps.maps3d.Map3DElement,
         google.maps.maps3d.Map3DElement
       >;
