@@ -13,6 +13,7 @@ import { useCallbackRef, useDeepCompareEffect } from "@/lib/utility-hooks";
 
 export type Map3DProps = google.maps.maps3d.Map3DElementOptions & {
   onCameraChange?: (cameraProps: Map3DCameraProps) => void;
+  children?: React.ReactNode;
 };
 
 export type Map3DCameraProps = {
@@ -46,7 +47,7 @@ export const Map3D = forwardRef(
       });
     }, []);
 
-    const { center, heading, tilt, range, roll, ...map3dOptions } = props;
+    const { center, heading, tilt, range, roll, children, ...map3dOptions } = props;
 
     useDeepCompareEffect(() => {
       if (!map3DElement) return;
@@ -71,7 +72,9 @@ export const Map3D = forwardRef(
         ref={map3dRef}
         roll={props.roll}
         tilt={props.tilt}
-      />
+      >
+        {children}
+      </gmp-map-3d>
     );
   }
 );

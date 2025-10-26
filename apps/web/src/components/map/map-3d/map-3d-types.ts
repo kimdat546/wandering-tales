@@ -16,17 +16,28 @@ declare global {
     interface Map3DElement extends HTMLElement {
       mode?: "HYBRID" | "SATELLITE";
     }
+
+    interface Marker3DElement extends HTMLElement {
+      position?: google.maps.LatLngAltitudeLiteral | string;
+      altitudeMode?: "ABSOLUTE" | "CLAMP_TO_GROUND" | "RELATIVE_TO_GROUND";
+      extruded?: boolean;
+      label?: string;
+    }
   }
 }
 
-// add the <gmp-map-3d> custom-element to the JSX.IntrinsicElements
-// interface, so it can be used in jsx
+// add the <gmp-map-3d> and <gmp-marker-3d> custom-elements to the JSX.IntrinsicElements
+// interface, so they can be used in jsx
 declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       ["gmp-map-3d"]: CustomElement<
         google.maps.maps3d.Map3DElement,
         google.maps.maps3d.Map3DElement
+      >;
+      ["gmp-marker-3d"]: CustomElement<
+        google.maps.maps3d.Marker3DElement,
+        google.maps.maps3d.Marker3DElement
       >;
     }
   }
