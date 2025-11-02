@@ -90,7 +90,8 @@ export function Map3DView() {
 
   const handleViewDetails = useCallback(() => {
     if (selectedTravelId) {
-      router.push(`/travel/${selectedTravelId}`);
+      // biome-ignore lint/suspicious/noExplicitAny: Next.js router type is too strict
+      (router.push as any)(`/travel/${selectedTravelId}`);
     }
   }, [selectedTravelId, router]);
 

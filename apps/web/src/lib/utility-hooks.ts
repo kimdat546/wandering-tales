@@ -1,7 +1,7 @@
 import {
-  DependencyList,
-  EffectCallback,
-  Ref,
+  type DependencyList,
+  type EffectCallback,
+  type Ref,
   useCallback,
   useEffect,
   useRef,
