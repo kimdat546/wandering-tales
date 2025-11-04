@@ -19,10 +19,40 @@ export const getTravelById = query({
       return null;
     }
 
-    const media = await ctx.db
+    const mediaItems = await ctx.db
       .query("media")
       .withIndex("by_travel", (q) => q.eq("travelId", args.id))
       .collect();
+
+    // Convert storage IDs to URLs
+    const media = await Promise.all(
+      mediaItems.map(async (item) => {
+        // Check if storageId is already a URL (for testing with external images)
+        const isExternalUrl =
+          item.storageId.startsWith("http://") ||
+          item.storageId.startsWith("https://");
+
+        const url = isExternalUrl
+          ? item.storageId
+          : await ctx.storage.getUrl(item.storageId);
+
+        let thumbnail: string | undefined;
+        if (item.thumbnailStorageId) {
+          const isThumbnailUrl =
+            item.thumbnailStorageId.startsWith("http://") ||
+            item.thumbnailStorageId.startsWith("https://");
+          thumbnail = isThumbnailUrl
+            ? item.thumbnailStorageId
+            : await ctx.storage.getUrl(item.thumbnailStorageId);
+        }
+
+        return {
+          ...item,
+          url: url ?? "",
+          thumbnail,
+        };
+      })
+    );
 
     return { ...travel, media };
   },

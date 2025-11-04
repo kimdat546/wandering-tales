@@ -1,3 +1,4 @@
+import isDeepEqual from "fast-deep-equal";
 import {
   type DependencyList,
   type EffectCallback,
@@ -5,9 +6,8 @@ import {
   useCallback,
   useEffect,
   useRef,
-  useState
-} from 'react';
-import isDeepEqual from 'fast-deep-equal';
+  useState,
+} from "react";
 
 export function useCallbackRef<T>() {
   const [el, setEl] = useState<T | null>(null);
@@ -22,7 +22,7 @@ export function useDeepCompareEffect(
 ) {
   const ref = useRef<DependencyList | undefined>(undefined);
 
-  if (!ref.current || !isDeepEqual(deps, ref.current)) {
+  if (!(ref.current && isDeepEqual(deps, ref.current))) {
     ref.current = deps;
   }
 
@@ -36,16 +36,13 @@ export function useDebouncedEffect(
 ) {
   const timerRef = useRef(0);
 
-  useEffect(
-    () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = 0;
-      }
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = 0;
+    }
 
-      timerRef.current = window.setTimeout(() => effect(), timeout);
-      return () => clearTimeout(timerRef.current);
-    },
-    [timeout, ...deps]
-  );
+    timerRef.current = window.setTimeout(() => effect(), timeout);
+    return () => clearTimeout(timerRef.current);
+  }, [timeout, ...deps]);
 }

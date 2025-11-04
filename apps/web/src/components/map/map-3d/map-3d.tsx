@@ -47,7 +47,8 @@ export const Map3D = forwardRef(
       });
     }, []);
 
-    const { center, heading, tilt, range, roll, children, ...map3dOptions } = props;
+    const { center, heading, tilt, range, roll, children, ...map3dOptions } =
+      props;
 
     useDeepCompareEffect(() => {
       if (!map3DElement) return;

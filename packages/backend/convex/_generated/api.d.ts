@@ -11,7 +11,6 @@
 import type * as healthCheck from "../healthCheck.js";
 import type * as media from "../media.js";
 import type * as seed from "../seed.js";
-import type * as todos from "../todos.js";
 import type * as travels from "../travels.js";
 
 import type {
@@ -32,7 +31,6 @@ declare const fullApi: ApiFromModules<{
   healthCheck: typeof healthCheck;
   media: typeof media;
   seed: typeof seed;
-  todos: typeof todos;
   travels: typeof travels;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

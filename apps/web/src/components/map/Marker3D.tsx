@@ -42,7 +42,9 @@ export function Marker3D({
     pin.scale = scale;
 
     // Create interactive marker element (allows click events)
-    const marker = document.createElement("gmp-marker-3d-interactive") as HTMLElement & {
+    const marker = document.createElement(
+      "gmp-marker-3d-interactive"
+    ) as HTMLElement & {
       position: { lat: number; lng: number; altitude?: number };
       altitudeMode?: string;
       extruded?: boolean;
@@ -80,7 +82,17 @@ export function Marker3D({
         markerRef.current.parentNode.removeChild(markerRef.current);
       }
     };
-  }, [position, title, onClick, altitudeMode, extruded, background, borderColor, glyphColor, scale]);
+  }, [
+    position,
+    title,
+    onClick,
+    altitudeMode,
+    extruded,
+    background,
+    borderColor,
+    glyphColor,
+    scale,
+  ]);
 
   return null;
 }

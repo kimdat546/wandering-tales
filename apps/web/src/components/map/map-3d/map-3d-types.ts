@@ -15,6 +15,30 @@ declare global {
   namespace google.maps.maps3d {
     interface Map3DElement extends HTMLElement {
       mode?: "HYBRID" | "SATELLITE";
+
+      // Camera animation methods
+      flyCameraTo(options: {
+        endCamera: {
+          center: google.maps.LatLngAltitudeLiteral;
+          range: number;
+          heading: number;
+          tilt: number;
+          roll: number;
+        };
+        durationMillis: number;
+      }): Promise<void>;
+
+      flyCameraAround(options: {
+        camera: {
+          center: google.maps.LatLngAltitudeLiteral;
+          range: number;
+          heading: number;
+          tilt: number;
+          roll: number;
+        };
+        durationMillis: number;
+        repeatCount?: number;
+      }): Promise<void>;
     }
 
     interface Marker3DElement extends HTMLElement {

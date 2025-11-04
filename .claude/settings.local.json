@@ -12,7 +12,10 @@
       "Bash(taskkill:*)",
       "Bash(bun x ultracite fix:*)",
       "Bash(bun x ultracite check:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(rm:*)",
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:developers.google.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

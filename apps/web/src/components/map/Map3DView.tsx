@@ -2,13 +2,14 @@
 
 import { APIProvider, type MapMouseEvent } from "@vis.gl/react-google-maps";
 import { api } from "@wandering-tales/backend/convex/_generated/api";
-import { type Id } from "@wandering-tales/backend/convex/_generated/dataModel";
+import type { Id } from "@wandering-tales/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { Calendar, MapPin, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { Map3D, type Map3DCameraProps } from "./map-3d";
+import { useCallback, useRef, useState } from "react";
+import { ImageSwiper } from "./ImageSwiper";
 import { Marker3D } from "./Marker3D";
+import { Map3D, type Map3DCameraProps } from "./map-3d";
 import { MiniMap } from "./minimap";
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string;
@@ -21,12 +22,30 @@ const INITIAL_CAMERA: Map3DCameraProps = {
   roll: 0,
 };
 
+const DISTANCE_MULTIPLIER = 111;
+
+// Helper function to get country flag emoji
+function getCountryFlag(country: string): string {
+  const flags: Record<string, string> = {
+    Vietnam: "🇻🇳",
+    China: "🇨🇳",
+    "United Arab Emirates": "🇦🇪",
+    Japan: "🇯🇵",
+    France: "🇫🇷",
+    Spain: "🇪🇸",
+  };
+  return flags[country] || "📍";
+}
+
 export function Map3DView() {
   const router = useRouter();
+  const map3DRef = useRef<google.maps.maps3d.Map3DElement | null>(null);
   const [cameraProps, setCameraProps] =
     useState<Map3DCameraProps>(INITIAL_CAMERA);
   const [selectedTravelId, setSelectedTravelId] =
     useState<Id<"travels"> | null>(null);
+  const [showImageSwiper, setShowImageSwiper] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Fetch all published travels
   const travels = useQuery(api.travels.getAllTravels);
@@ -41,6 +60,61 @@ export function Map3DView() {
     setCameraProps({ ...props });
   }, []);
 
+  // FlyTo animation with zoom out -> travel -> zoom in effect
+  const flyToLocation = useCallback(
+    async (destination: { lat: number; lng: number }) => {
+      const map3D = map3DRef.current;
+      if (!map3D || isAnimating) {
+        return;
+      }
+
+      setIsAnimating(true);
+
+      try {
+        // Step 1: Zoom out (high altitude view)
+        await map3D.flyCameraTo({
+          endCamera: {
+            center: { ...cameraProps.center, altitude: 0 },
+            range: 8_000_000, // Zoom way out
+            heading: cameraProps.heading,
+            tilt: 0, // Flatten view
+            roll: 0,
+          },
+          durationMillis: 1000,
+        });
+
+        // Step 2: Travel to destination (maintain high altitude)
+        await map3D.flyCameraTo({
+          endCamera: {
+            center: { lat: destination.lat, lng: destination.lng, altitude: 0 },
+            range: 8_000_000,
+            heading: 0,
+            tilt: 0,
+            roll: 0,
+          },
+          durationMillis: 2000,
+        });
+
+        // Step 3: Zoom in to destination
+        await map3D.flyCameraTo({
+          endCamera: {
+            center: { lat: destination.lat, lng: destination.lng, altitude: 0 },
+            range: 500_000, // Zoom in closer
+            heading: 0,
+            tilt: 60, // Nice angle
+            roll: 0,
+          },
+          durationMillis: 1200,
+        });
+      } catch {
+        // Animation was interrupted or failed
+      } finally {
+        setIsAnimating(false);
+      }
+    },
+    [cameraProps, isAnimating]
+  );
+
   const handleMapClick = useCallback((ev: MapMouseEvent) => {
     if (!ev.detail.latLng) {
       return;
@@ -54,31 +128,28 @@ export function Map3DView() {
     (travelId: Id<"travels">, location: { lat: number; lng: number }) => {
       setSelectedTravelId(travelId);
 
-      // Fly camera to location with animation
-      setCameraProps((prev) => ({
-        ...prev,
-        center: { lat: location.lat, lng: location.lng, altitude: 0 },
-        range: 500_000, // Zoom in closer
-        tilt: 60,
-      }));
+      // Use smooth FlyTo animation
+      flyToLocation(location).then(() => {
+        // Show image swiper after animation completes
+        setShowImageSwiper(true);
+      });
     },
-    []
-  );
-
-  const handleSidebarItemClick = useCallback(
-    (location: { lat: number; lng: number }) => {
-      // Only fly camera, don't show popup
-      setCameraProps((prev) => ({
-        ...prev,
-        center: { lat: location.lat, lng: location.lng, altitude: 0 },
-        range: 500_000, // Zoom in closer
-        tilt: 60,
-      }));
-    },
-    []
+    [flyToLocation]
   );
 
   const handlePopupClose = useCallback(() => {
+    setSelectedTravelId(null);
+    setShowImageSwiper(false);
+    // Zoom back out
+    setCameraProps((prev) => ({
+      ...prev,
+      range: 5_000_000,
+      tilt: 45,
+    }));
+  }, []);
+
+  const handleImageSwiperClose = useCallback(() => {
+    setShowImageSwiper(false);
     setSelectedTravelId(null);
     // Zoom back out
     setCameraProps((prev) => ({
@@ -98,122 +169,140 @@ export function Map3DView() {
   return (
     <APIProvider apiKey={API_KEY} version="beta">
       <div className="relative h-screen w-full">
-        <Map3D
-          {...cameraProps}
-          defaultLabelsDisabled={false}
-          onCameraChange={handleCameraChange}
+        {/* Main map with optimized grayscale filter */}
+        <div
+          className={`h-full w-full ${showImageSwiper ? "will-change-[filter]" : ""}`}
+          style={
+            showImageSwiper
+              ? {
+                  filter: "grayscale(100%)",
+                  transition: "filter 0.15s ease-out",
+                }
+              : { transition: "filter 0.15s ease-out" }
+          }
         >
-          {/* Render 3D Markers */}
-          {travels?.map((travel) => (
-            <Marker3D
-              key={travel._id}
-              onClick={() =>
-                handleMarkerClick(travel._id, {
+          <Map3D
+            {...cameraProps}
+            defaultLabelsDisabled={false}
+            onCameraChange={handleCameraChange}
+            ref={map3DRef}
+          >
+            {/* Render 3D Markers */}
+            {travels?.map((travel) => (
+              <Marker3D
+                key={travel._id}
+                onClick={() =>
+                  handleMarkerClick(travel._id, {
+                    lat: travel.location.lat,
+                    lng: travel.location.lng,
+                  })
+                }
+                position={{
                   lat: travel.location.lat,
                   lng: travel.location.lng,
-                })
-              }
-              position={{
-                lat: travel.location.lat,
-                lng: travel.location.lng,
-              }}
-              title={travel.title}
-            />
-          ))}
-        </Map3D>
+                }}
+                title={travel.title}
+              />
+            ))}
+          </Map3D>
+        </div>
 
-        {/* Enhanced Sidebar */}
+        {/* Gray overlay - fast GPU-accelerated */}
+        <div
+          className={`pointer-events-none absolute inset-0 z-10 bg-black/40 transition-opacity duration-150 ease-out ${
+            showImageSwiper ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ willChange: showImageSwiper ? "opacity" : "auto" }}
+        />
+
+        {/* Mult.dev-style Location List */}
         {travels && travels.length > 0 && (
-          <div className="pointer-events-none absolute inset-0">
-            <div className="pointer-events-auto absolute top-4 left-4 max-h-[calc(100vh-2rem)] w-80 overflow-hidden rounded-xl bg-white/95 shadow-2xl backdrop-blur-md">
-              {/* Header */}
-              <div className="border-gray-200 border-b bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-bold text-gray-900 text-lg">
-                    Travel Locations
-                  </h2>
-                  <span className="rounded-full bg-blue-600 px-2.5 py-1 font-semibold text-white text-xs">
-                    {travels.length}
-                  </span>
-                </div>
-                <p className="mt-1 text-gray-600 text-xs">
-                  Click to explore each destination
-                </p>
-              </div>
-
+          <div className="pointer-events-none absolute inset-0 z-20">
+            <div className="pointer-events-auto absolute top-6 left-6 flex max-h-[calc(100vh-3rem)] w-64 flex-col overflow-hidden rounded-2xl bg-gray-900/95 shadow-2xl backdrop-blur-md">
               {/* Scrollable List */}
-              <div className="max-h-[calc(100vh-10rem)] overflow-y-auto p-3">
-                <div className="space-y-2">
-                  {travels.map((travel) => (
+              <div className="flex-1 overflow-y-auto">
+                {travels.map((travel, index) => {
+                  const distance = Math.round(
+                    Math.sqrt(
+                      (travel.location.lat - cameraProps.center.lat) ** 2 +
+                        (travel.location.lng - cameraProps.center.lng) ** 2
+                    ) * DISTANCE_MULTIPLIER
+                  );
+
+                  return (
                     <button
-                      className={`group relative w-full overflow-hidden rounded-lg border p-3 text-left transition-all duration-200 ${
-                        selectedTravelId === travel._id
-                          ? "border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100 shadow-lg ring-2 ring-blue-500 ring-offset-2"
-                          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                      className={`group relative flex w-full items-center justify-between border-gray-800 border-b px-4 py-3 text-left transition-all duration-200 hover:bg-gray-800/50 ${
+                        selectedTravelId === travel._id ? "bg-gray-800" : ""
                       }`}
                       key={travel._id}
                       onClick={() =>
-                        handleSidebarItemClick({
+                        handleMarkerClick(travel._id, {
                           lat: travel.location.lat,
                           lng: travel.location.lng,
                         })
                       }
                       type="button"
                     >
-                      {/* Left accent bar */}
-                      <div
-                        className={`absolute top-0 left-0 h-full w-1 transition-all ${
-                          selectedTravelId === travel._id
-                            ? "bg-blue-600"
-                            : "bg-transparent group-hover:bg-blue-400"
-                        }`}
-                      />
+                      {/* Left side: Flag + Number + Title */}
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                        {/* Country Flag */}
+                        <span className="flex-shrink-0 text-xl leading-none">
+                          {getCountryFlag(travel.location.country)}
+                        </span>
 
-                      <div className="ml-2">
-                        <div className="mb-1 font-semibold text-gray-900">
-                          {travel.title}
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-600 text-xs">
-                          <MapPin className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">
-                            {travel.location.city}, {travel.location.state}
-                          </span>
-                        </div>
-                        {travel.visitDate && (
-                          <div className="mt-1 flex items-center gap-1 text-gray-500 text-xs">
-                            <Calendar className="h-3 w-3 flex-shrink-0" />
-                            <span>
-                              {new Date(travel.visitDate).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )}
+                        {/* Number + Title */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-mono text-gray-500 text-xs">
+                              {index + 1}
+                            </span>
+                            <span className="truncate font-medium text-sm text-white">
+                              {travel.title}
                             </span>
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Active indicator */}
-                      {selectedTravelId === travel._id && (
-                        <div className="-translate-y-1/2 absolute top-1/2 right-3">
-                          <div className="relative flex h-3 w-3">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                            <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500" />
-                          </div>
-                        </div>
-                      )}
+                      {/* Right side: Distance with airplane icon */}
+                      <div className="ml-3 flex flex-shrink-0 items-center gap-1.5 text-gray-400 text-xs">
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <title>Flight</title>
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        <span className="font-mono">{distance} km</span>
+                      </div>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
-        {/* Enhanced Popup Modal */}
-        {selectedTravel && (
+        {/* Image Swiper Gallery - Show if travel has media */}
+        {showImageSwiper &&
+          selectedTravel &&
+          selectedTravel.media &&
+          selectedTravel.media.length > 0 && (
+            <ImageSwiper
+              cards={selectedTravel.media.map((item, index) => ({
+                id: `${selectedTravel._id}-${index}`,
+                imageUrl: item.url,
+                title: selectedTravel.title,
+                caption: item.caption,
+              }))}
+              onClose={handleImageSwiperClose}
+              onViewFullStory={handleViewDetails}
+              travelTitle={selectedTravel.title}
+            />
+          )}
+
+        {/* Enhanced Popup Modal - Show if no media or swiper is hidden */}
+        {selectedTravel && !showImageSwiper && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20 p-4">
             <div className="fade-in zoom-in-95 pointer-events-auto w-full max-w-lg animate-in overflow-hidden rounded-2xl bg-white shadow-2xl duration-300">
               {/* Header with Gradient */}
@@ -345,7 +434,11 @@ export function Map3DView() {
           </div>
         )}
 
-        <MiniMap camera3dProps={cameraProps} onMapClick={handleMapClick} />
+        <MiniMap
+          camera3dProps={cameraProps}
+          isOverlayActive={showImageSwiper}
+          onMapClick={handleMapClick}
+        />
       </div>
     </APIProvider>
   );

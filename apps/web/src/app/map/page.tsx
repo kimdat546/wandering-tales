@@ -1,4 +1,4 @@
-import { Map3DView } from '@/components/map/Map3DView';
+import { Map3DView } from "@/components/map/Map3DView";
 
 export default function MapPage() {
   return (
